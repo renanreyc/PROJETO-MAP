@@ -1,44 +1,50 @@
 package test;
 
-import main.Aluno;
-import main.Disciplina;
-import main.Professor;
-
-import org.junit.jupiter.api.Assertions;
+import main.entidades.Aluno;
+import main.entidades.ControleAcademico;
+import main.entidades.FichaDeDisciplina;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.util.ArrayList;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DisciplinaTest {
-    private final List<Aluno> alunos = new ArrayList<>();
-    private Professor professor;
-    private Disciplina disciplinaGeografia;
-    private Disciplina disciplinaSociologia;
+
+    private ControleAcademico controleAcademico;
+    private Aluno carlos;
+    private Aluno filipe;
+    private FichaDeDisciplina geografia;
 
     @BeforeEach
     public void setup() throws Exception {
-        this.alunos.add(0, new Aluno("Eliseu"));
-        this.alunos.add(1, new Aluno("Felipe"));
-        this.professor = new Professor("Jorge");
+        controleAcademico = new ControleAcademico();
+        controleAcademico.limparBuffer();
 
-        this.disciplinaGeografia = new Disciplina("Geografia", this.professor);
-        disciplinaGeografia.cadastrarHorario("Quarta - 10:00");
-        this.disciplinaSociologia = new Disciplina("Sociologia", this.professor);
-        disciplinaSociologia.cadastrarHorario("Quinta - 07:00");
-        disciplinaSociologia.cadastrarHorario("Quinta - 18:00");
+        controleAcademico.criarNovoAluno("Carlos");
+        controleAcademico.criarNovoAluno("Filipe");
+        controleAcademico.criarNovoProfessor("Jorge");
+        controleAcademico.criarNovaDisciplina("Geografia");
 
-        this.disciplinaGeografia.cadastrarAlunos(alunos);
-        this.disciplinaSociologia.cadastrarAlunos(alunos);
+        controleAcademico.criarNovaFichaDeDisciplina("Quarta - 10:00", 0, 0);
+
+        this.carlos = controleAcademico.getAlunos().get(0);
+        this.filipe = controleAcademico.getAlunos().get(1);
+
+        this.geografia = controleAcademico.getFichas().get(0);
+
+        carlos.getRDM().inscreverEmDisciplina(geografia);
+        filipe.getRDM().inscreverEmDisciplina(geografia);
+
     }
 
     @Test
-    public void numeroCorretoDeAlunosMatriculados() throws Exception {
-        assertEquals(2, this.disciplinaGeografia.getQuantidadeDeAlunos());
-        this.disciplinaGeografia.cadastrarAluno(new Aluno("Marcos"));
-        assertEquals(3, this.disciplinaGeografia.getQuantidadeDeAlunos());
+    public void numeroDeAlunosMatriculadosEmUmaDisciplina() throws Exception {
+        assertEquals(2, this.controleAcademico.alunosMatriculadosEm(0).size());
+        controleAcademico.criarNovoAluno("Noah");
+        controleAcademico.getAlunos().get(2).getRDM().inscreverEmDisciplina(geografia);
+        assertEquals(3, this.controleAcademico.alunosMatriculadosEm(0).size());
     }
 
     @Test
@@ -54,27 +60,21 @@ public class DisciplinaTest {
     }
 
     @Test
-    public void cadastrarMesmoHorarioLancaExcecao() {
-        Assertions.assertThrows(Exception.class, () -> {
-            disciplinaSociologia.cadastrarHorario("Quinta - 18:00");
-        }, "Nothing was thrown");
-
-    }
-
-    @Test
     public void alunosCadastradosEmDisciplinaEstaoCorretos() throws Exception {
-        List<Aluno> alunos = this.disciplinaGeografia.getAlunos();
+
+        List<Aluno> alunos = controleAcademico.alunosMatriculadosEm(0);
 
         assertEquals(2, alunos.size());
-        assertEquals("Eliseu", alunos.get(0).getNome());
-        assertEquals("Felipe", alunos.get(1).getNome());
+        assertEquals("Carlos", alunos.get(0).getNome());
+        assertEquals("Filipe", alunos.get(1).getNome());
 
-        this.disciplinaGeografia.cadastrarAluno(new Aluno("Carlos"));
+        controleAcademico.criarNovoAluno("Zé");
+        controleAcademico.getAlunos().get(2).getRDM().inscreverEmDisciplina(geografia);
 
-        alunos = this.disciplinaGeografia.getAlunos();
+        alunos = controleAcademico.alunosMatriculadosEm(0);
 
         assertEquals(3, alunos.size());
-        assertEquals("Carlos", alunos.get(2).getNome());
+        assertEquals("Zé", alunos.get(2).getNome());
 
     }
 }

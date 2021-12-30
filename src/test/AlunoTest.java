@@ -1,50 +1,60 @@
 package test;
 
-import main.Aluno;
-import main.Disciplina;
-import main.Professor;
-
+import main.entidades.*;
+import main.helper.ElementNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AlunoTest {
 
+    private ControleAcademico controleAcademico;
     private Aluno aluno;
-    private Professor professor;
+    private FichaDeDisciplina algebra;
+    private FichaDeDisciplina filosofia;
 
     @BeforeEach
     public void setup() throws Exception {
-        this.aluno = new Aluno("Carlos");
-        this.professor = new Professor("Luiz");
+        controleAcademico = new ControleAcademico();
+        controleAcademico.limparBuffer();
 
-        Disciplina disciplinaAlgebra = new Disciplina("Algebra", this.professor);
-        disciplinaAlgebra.cadastrarHorario("Quarta - 10:00");
-        Disciplina disciplinaFilosofia = new Disciplina("Filosofia", this.professor);
-        disciplinaFilosofia.cadastrarHorario("Quinta - 07:00");
+        controleAcademico.criarNovoAluno("Carlos");
+        controleAcademico.criarNovoProfessor("Luiz");
+        controleAcademico.criarNovaDisciplina("Algebra");
+        controleAcademico.criarNovaDisciplina("Filosofia");
 
-        this.aluno.cadastrarDisciplina(disciplinaAlgebra);
-        this.aluno.cadastrarDisciplina(disciplinaFilosofia);
+        controleAcademico.criarNovaFichaDeDisciplina("Quarta - 10:00", 0, 0);
+        controleAcademico.criarNovaFichaDeDisciplina("Quinta - 07:00", 0, 1);
+
+        this.aluno = controleAcademico.getAlunos().get(0);
+        this.algebra = controleAcademico.getFichas().get(0);
+        this.filosofia = controleAcademico.getFichas().get(1);
+
+        aluno.getRDM().inscreverEmDisciplina(algebra);
+        aluno.getRDM().inscreverEmDisciplina(filosofia);
     }
 
     @Test
     public void retornaHorarioCorreto() throws Exception {
-        List<String> horario = this.aluno.getHorario();
+        List<String> horario = controleAcademico.horarioDoAluno(aluno.getId()) ;
 
         assertEquals(2, horario.size());
         assertEquals("Quarta - 10:00", horario.get(0));
         assertEquals("Quinta - 07:00", horario.get(1));
 
-        Disciplina novaDisciplina = new Disciplina("Astronomia", this.professor);
-        novaDisciplina.cadastrarHorario("Segunda - 18:00");
-        this.aluno.cadastrarDisciplina(novaDisciplina);
+        controleAcademico.criarNovaDisciplina("Matematica do amor");
+        controleAcademico.criarNovaFichaDeDisciplina("Segunda - 18:00", 0, 2);
 
-        horario = this.aluno.getHorario();
+        FichaDeDisciplina novaDisciplina = controleAcademico.getFichas().getElementById(2);
+        controleAcademico.criarNovaFichaDeDisciplina("Segunda - 18:00", 0, 2);
+
+        this.aluno.getRDM().inscreverEmDisciplina(novaDisciplina);
+
+        horario = controleAcademico.horarioDoAluno(aluno.getId());
 
         assertEquals(3, horario.size());
         assertEquals("Segunda - 18:00", horario.get(2));
@@ -52,18 +62,18 @@ public class AlunoTest {
     }
 
     @Test
-    public void retornaDisciplinasCorretas() {
-        List<Disciplina> disciplinas = this.aluno.getDisciplinas();
+    public void retornaDisciplinasCorretas() throws ElementNotFoundException {
+        List<FichaDeDisciplina> fichas = this.controleAcademico.disciplinasDe(0);
 
-        assertEquals(2, disciplinas.size());
-        assertEquals("Algebra", disciplinas.get(0).getNome());
-        assertEquals("Filosofia", disciplinas.get(1).getNome());
+        assertEquals(2, fichas.size());
+        assertEquals("Algebra", fichas.get(0).getDisciplina().getNome());
+        assertEquals("Filosofia", fichas.get(1).getDisciplina().getNome());
 
     }
 
     @Test
     public void nomeInvalido() {
-        Assertions.assertThrows(Exception.class, () -> {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new Aluno("");
         }, "Nothing was thrown");
     }
@@ -83,23 +93,15 @@ public class AlunoTest {
     @Test
     public void alunoMudouSeuNome() {
         assertEquals("Carlos", this.aluno.getNome());
-
         this.aluno.setNome("Henrique");
-
         assertEquals("Henrique", this.aluno.getNome());
     }
 
     @Test
     public void alunoCadastraVariasDisciplinas() {
-        assertEquals(2, this.aluno.getDisciplinas().size());
-
-        List<Disciplina> novasDisciplinas = new ArrayList<>();
-        novasDisciplinas.add(new Disciplina("Astronomia",  this.professor));
-        novasDisciplinas.add(new Disciplina("Astronomia 2 ", this.professor));
-
-        this.aluno.cadastrarDisciplinas(novasDisciplinas);
-
-        assertEquals(4, this.aluno.getDisciplinas().size());
+        assertEquals(2, this.aluno.getRDM().getDisciplinas().size());
+        this.aluno.getRDM().inscreverEmDisciplina(algebra);
+        assertEquals(3, this.aluno.getRDM().getDisciplinas().size());
     }
 
 }

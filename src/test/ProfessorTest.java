@@ -1,49 +1,47 @@
 package test;
 
-import main.Disciplina;
-import main.Professor;
+import main.entidades.ControleAcademico;
+import main.entidades.FichaDeDisciplina;
+import main.entidades.Professor;
+import main.helper.ElementNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProfessorTest {
 
-    private Professor professor;
+    private ControleAcademico controleAcademico;
 
     @BeforeEach
     public void setup() throws Exception {
-        this.professor = new Professor("Luiz");
+        controleAcademico = new ControleAcademico();
+        controleAcademico.limparBuffer();
 
-        Disciplina disciplinaAlgebra = new Disciplina("Algebra",  this.professor);
-        Disciplina disciplinaFilosofia = new Disciplina("Filosofia", this.professor);
+        controleAcademico.criarNovoProfessor("Luiz");
+        controleAcademico.criarNovaDisciplina("Algebra");
+        controleAcademico.criarNovaDisciplina("Filosofia");
 
-        disciplinaAlgebra.cadastrarHorario("Quarta - 10:00");
-        disciplinaFilosofia.cadastrarHorario("Segunda - 07:00");
-
-        this.professor.cadastrarDisciplina(disciplinaAlgebra);
-        this.professor.cadastrarDisciplina(disciplinaFilosofia);
+        controleAcademico.criarNovaFichaDeDisciplina("Quarta - 10:00", 0, 0);
+        controleAcademico.criarNovaFichaDeDisciplina("Segunda - 07:00", 0, 1);
 
     }
 
     @Test
     public void retornaHorarioCorreto() throws Exception {
-        List<String> horario = this.professor.getHorario();
+        List<String> horario = controleAcademico.horarioDoProfessor(0);
 
         assertEquals(2, horario.size());
         assertEquals("Quarta - 10:00", horario.get(0));
         assertEquals("Segunda - 07:00", horario.get(1));
 
-        Disciplina novaDisciplina = new Disciplina("Astronomia", this.professor);
-        novaDisciplina.cadastrarHorario("Segunda - 18:00");
+        controleAcademico.criarNovaDisciplina("Astronomia");
+        controleAcademico.criarNovaFichaDeDisciplina("Segunda - 18:00", 0, 2);
 
-        this.professor.cadastrarDisciplina(novaDisciplina);
-
-        horario = this.professor.getHorario();
+        horario = controleAcademico.horarioDoProfessor(0);
 
         assertEquals(3, horario.size());
         assertEquals("Segunda - 18:00", horario.get(2));
@@ -52,11 +50,10 @@ public class ProfessorTest {
 
     @Test
     public void retornaDisciplinasCorretas() {
-        List<Disciplina> disciplinas = this.professor.getDisciplinas();
-
-        assertEquals(2, disciplinas.size());
-        assertEquals("Algebra", disciplinas.get(0).getNome());
-        assertEquals("Filosofia", disciplinas.get(1).getNome());
+        List<FichaDeDisciplina> fichas = controleAcademico.disciplinasMinistradasPor(0);
+        assertEquals(2, fichas.size());
+        assertEquals("Algebra", fichas.get(0).getDisciplina().getNome());
+        assertEquals("Filosofia", fichas.get(1).getDisciplina().getNome());
 
     }
 
@@ -79,29 +76,23 @@ public class ProfessorTest {
     }
 
     @Test
-    public void professorMudouSeuNome() {
-        assertEquals("Luiz", this.professor.getNome());
-
-        this.professor.setNome("Zé");
-
-        assertEquals("Zé", this.professor.getNome());
+    public void professorMudouSeuNome() throws ElementNotFoundException {
+        Professor professor = controleAcademico.getProfessores().getElementById(0);
+        assertEquals("Luiz", professor.getNome());
+        professor.setNome("Zé");
+        assertEquals("Zé", professor.getNome());
     }
 
     @Test
-    public void professorMinistraVariasDisciplinas() {
-        assertEquals(2, this.professor.getDisciplinas().size());
+    public void professorMinistraVariasDisciplinas() throws ElementNotFoundException {
 
-        List<Disciplina> novasDisciplinas = new ArrayList<>();
+        assertEquals(2, controleAcademico.disciplinasMinistradasPor(0).size());
+        controleAcademico.criarNovaDisciplina("Astronomia");
+        controleAcademico.criarNovaDisciplina("Astronomia 2");
+        controleAcademico.criarNovaFichaDeDisciplina("qualquer-um", 0, 2);
+        controleAcademico.criarNovaFichaDeDisciplina("qualquer-um", 0, 3);
 
-        Disciplina novaDisciplina = new Disciplina("Astronomia",  this.professor);
-        Disciplina novaDisciplina2 = new Disciplina("Astronomia 2",  this.professor);
-
-        novasDisciplinas.add(novaDisciplina);
-        novasDisciplinas.add(novaDisciplina2);
-
-        this.professor.cadastrarDisciplinas(novasDisciplinas);
-
-        assertEquals(4, this.professor.getDisciplinas().size());
+        assertEquals(4, controleAcademico.disciplinasMinistradasPor(0).size());
     }
 
 }
